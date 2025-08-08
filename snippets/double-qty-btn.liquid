@@ -23,7 +23,8 @@
         class="double-qty-btn sf__btn sf__btn-secondary"
         aria-label="{{ btn_label }}"
         data-double-qty
-        data-label-template="{{ label_template }}">
+        data-label-template="{{ label_template }}"
+        data-product-id="{{ product.id | default: item.product_id }}">
     {{ btn_label }}
 </button>
 {% endif %}
