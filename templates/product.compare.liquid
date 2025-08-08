@@ -5,10 +5,11 @@
         data-product-handle: product.handle %}
     <input hidden name="id" required value="{{ product.selected_or_first_available_variant.id }}">
 
-    <a class="sf__pcard-image block group overflow-hidden cursor-pointer relative" href="{{ product.url | within: collection }}">
-        <div style="height: 350px;">
-            {% render 'responsive-image', image: product.featured_image %}
-        </div>
+      <a class="sf__pcard-image block group overflow-hidden cursor-pointer relative" href="{{ product.url | within: collection }}">
+          <div class="collection-pcard-error" aria-live="polite"><span class="collection-pcard-error__msg"></span></div>
+          <div style="height: 350px;">
+              {% render 'responsive-image', image: product.featured_image %}
+          </div>
         <div class="transition-all duration-300 opacity-100 md:opacity-0 absolute z-10 right-5 md:-right-14 top-5 group-hover:opacity-100 group-hover:right-5">
             {% render 'tooltip', type: 'remove-from-compare', product: product %}
         </div>

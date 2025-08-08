@@ -440,7 +440,7 @@ function handleDelegatedAddToCart(e){
       this.idInput = this.form ? this.form.querySelector('[name="id"]') : null;
       if(this.idInput){ this.idInput.disabled = false; }
       const card = this.closest('.sf__pcard');
-      this.error = new CollectionPCardError(card ? card.querySelector('.collection-pcard-error') : null);
+      this.error = new CollectionPCardError(card.querySelector('.collection-pcard-error'));
       this.addEventListener('submit', this.onSubmit.bind(this));
     }
     toggleSpinner(show){
