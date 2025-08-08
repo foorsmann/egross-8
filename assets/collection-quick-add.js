@@ -286,56 +286,63 @@
     });
   }
 
-  function handleDelegatedAddToCart(e){
-    var btn = e.target.closest('[data-collection-add-to-cart], .collection-add-to-cart, .add-to-cart');
-    if(!btn) return;
-    e.preventDefault();
-    if(addToCartLocks.has(btn) || btn.disabled || btn.getAttribute('aria-busy') === 'true') return;
-    addToCartLocks.add(btn);
-    btn.disabled = true;
-    btn.setAttribute('aria-busy','true');
-    var card = btn.closest('[data-product-id],[data-collection-product-id]');
-    if(!card){
-      btn.removeAttribute('aria-busy');
-      btn.disabled = false;
-      addToCartLocks.delete(btn);
-      return;
-    }
-    var info = getVisibleQty(card);
-    var form = info.baseCard.querySelector('form.product-card-form, form[action*="/cart/add"]');
-    if(!form){
-      btn.removeAttribute('aria-busy');
-      btn.disabled = false;
-      addToCartLocks.delete(btn);
-      return;
-    }
-    var fd = new FormData(form);
-    fd.set('quantity', String(info.val));
-    fetch('/cart/add.js', {
-      method:'POST',
-      headers:{ 'Accept':'application/json' },
-      body: fd
-    })
-      .then(function(res){
-        if(!res.ok){
-          return res.json().then(function(j){ throw j; });
-        }
-        return res.json();
-      })
-      .then(function(body){
-        window.ConceptSGMEvents?.emit('COLLECTION_ITEM_ADDED', body);
-        window.Shopify?.onItemAdded?.(body);
-        document.dispatchEvent(new CustomEvent('cart:updated', { detail:{ source:'collection-quick-add' } }));
-      })
-      .catch(function(err){
-        console.error('[quick-add] error:', err);
-      })
-      .finally(function(){
-        btn.removeAttribute('aria-busy');
-        btn.disabled = false;
-        addToCartLocks.delete(btn);
-      });
+function handleDelegatedAddToCart(e){
+  var btn = e.target.closest('[data-collection-add-to-cart], .collection-add-to-cart, .add-to-cart');
+  if(!btn) return;
+  if(!btn.closest('.sf__pcard')) return;              // rulează doar în cadrul cardurilor de produs
+
+  e.preventDefault();
+  if(addToCartLocks.has(btn) || btn.disabled || btn.getAttribute('aria-busy') === 'true') return;
+
+  addToCartLocks.add(btn);
+  btn.disabled = true;
+  btn.setAttribute('aria-busy','true');
+
+  var card = btn.closest('[data-product-id],[data-collection-product-id]');
+  if(!card){
+    btn.removeAttribute('aria-busy');
+    btn.disabled = false;
+    addToCartLocks.delete(btn);
+    return;
   }
+
+  var info = getVisibleQty(card);
+  var form = info.baseCard.querySelector('form.product-card-form, form[action*="/cart/add"]');
+  if(!form){
+    btn.removeAttribute('aria-busy');
+    btn.disabled = false;
+    addToCartLocks.delete(btn);
+    return;
+  }
+
+  var fd = new FormData(form);
+  fd.set('quantity', String(info.val));
+
+  fetch('/cart/add.js', {
+    method:'POST',
+    headers:{ 'Accept':'application/json' },
+    body: fd
+  })
+    .then(function(res){
+      if(!res.ok){
+        return res.json().then(function(j){ throw j; });
+      }
+      return res.json();
+    })
+    .then(function(body){
+      window.ConceptSGMEvents?.emit('COLLECTION_ITEM_ADDED', body);
+      window.Shopify?.onItemAdded?.(body);
+      document.dispatchEvent(new CustomEvent('cart:updated', { detail:{ source:'collection-quick-add' } }));
+    })
+    .catch(function(err){
+      console.error('[quick-add] error:', err);
+    })
+    .finally(function(){
+      btn.removeAttribute('aria-busy');
+      btn.disabled = false;
+      addToCartLocks.delete(btn);
+    });
+}
 
   function handleDoubleQtyClick(e){
     var btn = e.target.closest('.collection-double-qty-btn');
