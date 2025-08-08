@@ -3,6 +3,12 @@
  * Mirrors product-page quantity logic with collection-specific hooks.
  */
 (function(){
+  var DELEGATED_SECTIONS = [
+    '#shopify-section-template--25993114681683__product-recommendations',
+    '#shopify-section-template--25993114681683__recent-viewed-products'
+  ];
+  var DELEGATED_SECTION_SELECTOR = DELEGATED_SECTIONS.join(', ');
+  var addToCartLocks = new WeakSet();
   function snapDown(val, step, min){
     if(!isFinite(val)) return min;
     if(val < min) return min;
@@ -215,6 +221,38 @@
       btn.blur();
     }, true);
   }
+  function isDuplicateSlide(el){
+    return !!(el && (el.classList && el.classList.contains('swiper-slide-duplicate') || el.closest('.swiper-slide-duplicate')));
+  }
+  function findRealCardByPid(card, pid){
+    var wrapper = card.closest('.swiper-wrapper') || document;
+    var selector = '.swiper-slide:not(.swiper-slide-duplicate) [data-product-id="'+pid+'"], .swiper-slide:not(.swiper-slide-duplicate) [data-collection-product-id="'+pid+'"]';
+    var found = wrapper.querySelector(selector);
+    return found ? found.closest('[data-product-id],[data-collection-product-id]') : null;
+  }
+  function findQtyEl(root){
+    return root ? root.querySelector('[data-collection-quantity-input], .quantity-input__element, input[name="quantity"]') : null;
+  }
+  function getVisibleQty(card){
+    var baseCard = card;
+    var pid = card.getAttribute('data-product-id') || card.getAttribute('data-collection-product-id');
+    if(isDuplicateSlide(card)){
+      var real = findRealCardByPid(card, pid);
+      if(real) baseCard = real;
+    }
+    var qtyEl = findQtyEl(baseCard);
+    var val = parseInt(qtyEl && (qtyEl.value || qtyEl.getAttribute('value')) || '1',10);
+    if(!isFinite(val) || val < 1) val = 1;
+    var min = parseInt(qtyEl && (qtyEl.min || '1'),10) || 1;
+    var step = parseInt(qtyEl && (qtyEl.getAttribute('data-collection-min-qty') || qtyEl.step || '1'),10) || 1;
+    var max = parseInt(qtyEl && (qtyEl.max || '999999'),10) || 999999;
+    val = Math.max(min, Math.min(max, val));
+    if(step > 1){
+      var snapped = Math.round((val - min)/step)*step + min;
+      if(isFinite(snapped)) val = snapped;
+    }
+    return { val: val, baseCard: baseCard, qtyEl: qtyEl };
+  }
   function findQtyInput(btn){
     var group = btn.closest('.collection-qty-group');
     if(group){
@@ -257,9 +295,90 @@
     });
   }
 
+  function handleDelegatedAddToCart(e){
+    var section = e.target.closest(DELEGATED_SECTION_SELECTOR);
+    if(!section) return;
+    var btn = e.target.closest('[data-collection-add-to-cart], .collection-add-to-cart, .add-to-cart');
+    if(!btn) return;
+    e.preventDefault();
+    if(addToCartLocks.has(btn) || btn.disabled || btn.getAttribute('aria-busy') === 'true') return;
+    addToCartLocks.add(btn);
+    btn.disabled = true;
+    btn.setAttribute('aria-busy','true');
+    var card = btn.closest('[data-product-id],[data-collection-product-id]');
+    if(!card){
+      btn.removeAttribute('aria-busy');
+      btn.disabled = false;
+      addToCartLocks.delete(btn);
+      return;
+    }
+    var info = getVisibleQty(card);
+    var form = info.baseCard.querySelector('form.product-card-form, form[action*="/cart/add"]');
+    if(!form){
+      btn.removeAttribute('aria-busy');
+      btn.disabled = false;
+      addToCartLocks.delete(btn);
+      return;
+    }
+    var fd = new FormData(form);
+    fd.set('quantity', String(info.val));
+    fetch('/cart/add.js', {
+      method:'POST',
+      headers:{ 'Accept':'application/json' },
+      body: fd
+    })
+      .then(function(res){
+        if(!res.ok){
+          return res.json().then(function(j){ throw j; });
+        }
+        return res.json();
+      })
+      .then(function(){
+        document.dispatchEvent(new CustomEvent('cart:updated', { detail:{ source:'collection-quick-add' } }));
+      })
+      .catch(function(err){
+        console.error('[quick-add] error:', err);
+      })
+      .finally(function(){
+        btn.removeAttribute('aria-busy');
+        btn.disabled = false;
+        addToCartLocks.delete(btn);
+      });
+  }
+
   function handleDoubleQtyClick(e){
     var btn = e.target.closest('.collection-double-qty-btn');
     if(!btn) return;
+    var inSection = btn.closest(DELEGATED_SECTION_SELECTOR);
+    if(inSection){
+      e.preventDefault();
+      var card = btn.closest('[data-product-id],[data-collection-product-id]');
+      if(!card) return;
+      var pid = card.getAttribute('data-product-id') || card.getAttribute('data-collection-product-id');
+      var dup = isDuplicateSlide(card);
+      var realCard = dup ? findRealCardByPid(card, pid) : card;
+      var qtyEl = findQtyEl(realCard);
+      if(!qtyEl) return;
+      var step = parseInt(qtyEl.getAttribute('data-collection-min-qty'),10) || parseInt(qtyEl.step,10) || 1;
+      var max = qtyEl.max ? parseInt(qtyEl.max,10) : Infinity;
+      var current = parseInt(qtyEl.value,10);
+      if(isNaN(current)) current = 0;
+      var newVal = current + step;
+      if(newVal > max) newVal = max;
+      qtyEl.value = newVal;
+      validateAndHighlight(qtyEl);
+      updateQtyButtonsState(qtyEl);
+      qtyEl.dispatchEvent(new Event('input',{bubbles:true}));
+      qtyEl.dispatchEvent(new Event('change',{bubbles:true}));
+      updateCollectionDoubleQtyState(qtyEl);
+      if(dup){
+        var cloneQty = findQtyEl(card);
+        if(cloneQty && cloneQty !== qtyEl){ cloneQty.value = newVal; }
+      }
+      clearTextSelection();
+      btn.blur();
+      return;
+    }
     e.preventDefault();
     var input = findQtyInput(btn);
     if(!input) return;
@@ -315,6 +434,7 @@
   document.addEventListener('change', handleQtyInputEvent, true);
   document.addEventListener('blur', handleQtyInputEvent, true);
   document.addEventListener('keypress', handleQtyKeypress, true);
+  document.addEventListener('click', handleDelegatedAddToCart, true);
   document.addEventListener('click', handleDoubleQtyClick, true);
   document.addEventListener('focus', handleDoubleQtyFocus, true);
   document.addEventListener('blur', handleDoubleQtyBlur, true);
