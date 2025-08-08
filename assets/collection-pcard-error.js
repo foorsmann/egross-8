@@ -12,7 +12,12 @@ class CollectionPCardError {
     }
   }
   removeDiacritics(text) {
-    return text && text.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+    if (!text) return text;
+    try {
+      return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    } catch (e) {
+      return text;
+    }
   }
   show(msg) {
     if (!this.node) return;
