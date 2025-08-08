@@ -148,6 +148,10 @@ var BUTTON_CLASS = 'double-qty-btn';
       input.addEventListener('input', clearWarning, { once: true });
       input.addEventListener('change', clearWarning, { once: true });
     });
+    if(typeof window.collectionApplyCappedQtyState === 'function'){
+      var cInput = document.querySelector('input[data-collection-product-id="' + productId + '"][data-collection-quantity-input]');
+      if(cInput){ window.collectionApplyCappedQtyState(cInput); }
+    }
   }
 
   window.syncOtherQtyInputs = syncOtherQtyInputs;

@@ -107,8 +107,10 @@ if (!customElements.get("product-form")) {
         });
       }
 
-      if (requestedQty > availableToAdd) {
-        formData.set('quantity', availableToAdd);
+      if (requestedQty >= availableToAdd) {
+        if (requestedQty > availableToAdd) {
+          formData.set('quantity', availableToAdd);
+        }
         if (qtyInput) {
           resetQty = true;
         }
