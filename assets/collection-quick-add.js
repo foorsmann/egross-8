@@ -356,6 +356,9 @@
     if(inSection){
       e.preventDefault();
       var card = btn.closest('[data-product-id],[data-collection-product-id]');
+      if(card === btn) {
+        card = btn.parentElement && btn.parentElement.closest('[data-product-id],[data-collection-product-id]');
+      }
       if(!card) return;
       var pid = card.getAttribute('data-product-id') || card.getAttribute('data-collection-product-id');
       var dup = isDuplicateSlide(card);
