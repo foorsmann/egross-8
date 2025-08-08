@@ -114,6 +114,7 @@
             step="{{ item.product.metafields.custom.minimum_quantity | default: 1 }}"
             data-min-qty="{{ item.product.metafields.custom.minimum_quantity | default: 1 }}"
             max="{{ item.variant.inventory_quantity }}"
+            data-inventory-policy="{{ item.variant.inventory_policy }}"
           />
           <button class="scd-item__btn" data-id="{{- item.key -}}" data-qty-change="inc">+</button>
         </div>

@@ -22,8 +22,7 @@
   function validateAndHighlightQty(input){
     // allow user to temporarily clear the field without forcing it back to 1
     if(input.value === ''){
-      input.classList.remove('text-red-600');
-      input.style.color = '';
+      input.classList.remove('qty-error');
       return;
     }
     var min = input.min ? parseInt(input.min,10) : 1;
@@ -34,11 +33,9 @@
     val = clampAndSnap(val, step, min, max, false);
     input.value = val;
     if(val >= max){
-      input.classList.add('text-red-600');
-      input.style.color = '#e3342f';
+      input.classList.add('qty-error');
     }else{
-      input.classList.remove('text-red-600');
-      input.style.color = '';
+      input.classList.remove('qty-error');
     }
     return val;
   }
@@ -117,8 +114,7 @@ var BUTTON_CLASS = 'double-qty-btn';
       input.removeAttribute('data-min-qty');
       input.min = 0;
       input.value = 0;
-      input.classList.add('text-red-600');
-      input.style.color = '#e3342f';
+      input.classList.add('qty-error');
       if(typeof updateQtyButtonsState === 'function'){
         updateQtyButtonsState(input);
       }
@@ -129,8 +125,7 @@ var BUTTON_CLASS = 'double-qty-btn';
         }
       },0);
       var clearWarning = function(){
-        input.classList.remove('text-red-600');
-        input.style.color = '';
+        input.classList.remove('qty-error');
         if(input.dataset.prevMin){
           input.min = input.dataset.prevMin;
           delete input.dataset.prevMin;
@@ -152,6 +147,99 @@ var BUTTON_CLASS = 'double-qty-btn';
 
   window.syncOtherQtyInputs = syncOtherQtyInputs;
   window.applyCappedQtyState = applyCappedQtyState;
+
+  function fetchCart(){
+    return fetch('/cart.js').then(r=>r.json()).catch(()=>({items:[]}));
+  }
+
+  function getVariantInventory(pid, vid){
+    var prod = window._themeProducts && window._themeProducts[pid];
+    if(!prod) return {quantity: Infinity, policy: 'continue'};
+    var variant = prod.variants && prod.variants.find(function(v){ return v.id === Number(vid); });
+    if(!variant) return {quantity: Infinity, policy: 'continue'};
+    return {quantity: parseInt(variant.inventory_quantity,10) || 0, policy: variant.inventory_policy || 'continue'};
+  }
+
+  function applyQtyLimit(form, cart){
+    var qtyInput = form.querySelector('input[data-quantity-input]');
+    var variantInput = form.querySelector('[name="id"]');
+    if(!qtyInput || !variantInput) return;
+    var closestCard = form.closest('[data-product-id]');
+    var pid = qtyInput.dataset.productId || (closestCard ? closestCard.getAttribute('data-product-id') : null);
+    var vid = parseInt(variantInput.value,10);
+    var inv = getVariantInventory(pid, vid);
+    if(qtyInput.dataset.inventoryPolicy){ inv.policy = qtyInput.dataset.inventoryPolicy; }
+    if(inv.policy === 'continue'){ qtyInput.removeAttribute('max'); updateQtyButtonsState(qtyInput); return; }
+    var inCart = 0;
+    if(cart && cart.items){
+      var found = cart.items.find(function(it){ return it.variant_id === vid; });
+      if(found) inCart = found.quantity;
+    }
+    var maxQty = Math.max(inv.quantity - inCart, 0);
+    qtyInput.max = maxQty;
+    if(maxQty <= 0){
+      qtyInput.value = 0;
+      qtyInput.classList.add('qty-error');
+      var plus = form.querySelector('[data-quantity-selector="increase"],[data-qty-change="inc"]');
+      if(plus) plus.disabled = true;
+      var dbl = form.querySelector('.double-qty-btn');
+      if(dbl) dbl.disabled = true;
+      updateDoubleQtyState(qtyInput);
+    }else{
+      validateAndHighlightQty(qtyInput);
+      updateQtyButtonsState(qtyInput);
+      updateDoubleQtyState(qtyInput);
+      var dblBtn = form.querySelector('.double-qty-btn');
+      if(dblBtn) dblBtn.disabled = false;
+    }
+  }
+
+  function initQtyLimits(){
+    fetchCart().then(function(cart){
+      document.querySelectorAll('form[action*="/cart/add"]').forEach(function(form){
+        applyQtyLimit(form, cart);
+        var idInput = form.querySelector('[name="id"]');
+        if(idInput){
+          idInput.addEventListener('change', function(){
+            fetchCart().then(function(c){ applyQtyLimit(form, c); });
+          });
+        }
+      });
+    });
+  }
+
+  function initCartLineLimits(){
+    document.querySelectorAll('[data-cart-item]').forEach(function(item){
+      var input = item.querySelector('.scd-item__qty_input, input[name="updates[]"]');
+      if(!input) return;
+      if(input.dataset.inventoryPolicy === 'continue') return;
+      var plus = item.querySelector('[data-qty-change="inc"]');
+      if(plus){
+        if(input.max && parseInt(input.value,10) >= parseInt(input.max,10)) plus.disabled = true;
+        plus.addEventListener('click', function(e){
+          var step = parseInt(input.getAttribute('data-min-qty'),10) || parseInt(input.step,10) || 1;
+          var max = parseInt(input.max,10);
+          var val = parseInt(input.value,10) || 0;
+          if(isFinite(max) && val + step > max){
+            e.preventDefault();
+            e.stopPropagation();
+            if(window.ConceptSGMTheme && window.ConceptSGMTheme.Notification){
+              window.ConceptSGMTheme.Notification.show({target: item, method:'appendChild', type:'warning', message: window.ConceptSGMStrings.cartLimit || 'Cantitatea maxima pentru acest produs este deja in cos.'});
+            }
+          }
+        }, true);
+        input.addEventListener('input', function(){
+          if(!plus) return;
+          plus.disabled = input.max && parseInt(input.value,10) >= parseInt(input.max,10);
+        });
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    initQtyLimits();
+    initCartLineLimits();
+  });
 
     function handleQtyInputEvent(e){
       var input = e.target.closest('.quantity-input__element, .scd-item__qty_input, input[data-quantity-input]');
@@ -238,11 +326,9 @@ var BUTTON_CLASS = 'double-qty-btn';
     var newVal = clampAndSnap(val, step, 1, max);
     input.value = newVal;
     if(newVal >= max){
-      input.classList.add('text-red-600');
-      input.style.color = '#e3342f';
+      input.classList.add('qty-error');
     }else{
-      input.classList.remove('text-red-600');
-      input.style.color = '';
+      input.classList.remove('qty-error');
     }
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.dispatchEvent(new Event('change', { bubbles: true }));

@@ -3,6 +3,7 @@
  * Mirrors product-page quantity logic with collection-specific hooks.
  */
 (function(){
+  var addToCartLocks = new WeakSet();
   function snapDown(val, step, min){
     if(!isFinite(val)) return min;
     if(val < min) return min;
@@ -22,8 +23,7 @@
   }
   function validateAndHighlight(input){
       if(input.value === ''){
-        input.classList.remove('text-red-600');
-        input.style.color = '';
+        input.classList.remove('qty-error');
         return;
     }
     var min = input.min ? parseInt(input.min,10) : 1;
@@ -34,11 +34,9 @@
     val = clampAndSnap(val, step, min, max, false);
     input.value = val;
     if(val >= max){
-      input.classList.add('text-red-600');
-      input.style.color = '#e3342f';
+      input.classList.add('qty-error');
     }else{
-      input.classList.remove('text-red-600');
-      input.style.color = '';
+      input.classList.remove('qty-error');
     }
     return val;
   }
@@ -91,16 +89,14 @@
       input.removeAttribute('data-collection-min-qty');
       input.min = 0;
       input.value = 0;
-      input.classList.add('text-red-600');
-      input.style.color = '#e3342f';
+      input.classList.add('qty-error');
       updateQtyButtonsState(input);
       setTimeout(function(){
         input.value = 0;
         updateQtyButtonsState(input);
       },0);
       var clearWarning = function(){
-        input.classList.remove('text-red-600');
-        input.style.color = '';
+        input.classList.remove('qty-error');
         if(input.dataset.prevMin){
           input.min = input.dataset.prevMin;
           delete input.dataset.prevMin;
@@ -169,11 +165,9 @@
     var newVal = clampAndSnap(val, step, 1, max);
     input.value = newVal;
     if(newVal >= max){
-      input.classList.add('text-red-600');
-      input.style.color = '#e3342f';
+      input.classList.add('qty-error');
     }else{
-      input.classList.remove('text-red-600');
-      input.style.color = '';
+      input.classList.remove('qty-error');
     }
     input.dispatchEvent(new Event('input',{bubbles:true}));
     input.dispatchEvent(new Event('change',{bubbles:true}));
@@ -214,6 +208,34 @@
       clearTextSelection();
       btn.blur();
     }, true);
+  }
+  function isDuplicateSlide(el){
+    return !!(el && (el.classList && el.classList.contains('swiper-slide-duplicate') || el.closest('.swiper-slide-duplicate')));
+  }
+  function findRealCardByPid(card, pid){
+    var wrapper = card.closest('.swiper-wrapper') || document;
+    var selector = '.swiper-slide:not(.swiper-slide-duplicate) [data-product-id="'+pid+'"], .swiper-slide:not(.swiper-slide-duplicate) [data-collection-product-id="'+pid+'"]';
+    var found = wrapper.querySelector(selector);
+    return found ? found.closest('[data-product-id],[data-collection-product-id]') : null;
+  }
+  function findQtyEl(root){
+    return root ? root.querySelector('[data-collection-quantity-input], .quantity-input__element, input[name="quantity"]') : null;
+  }
+  function getVisibleQty(card){
+    var baseCard = card;
+    var pid = card.getAttribute('data-product-id') || card.getAttribute('data-collection-product-id');
+    if(isDuplicateSlide(card)){
+      var real = findRealCardByPid(card, pid);
+      if(real) baseCard = real;
+    }
+    var qtyEl = findQtyEl(baseCard);
+    var val = parseInt(qtyEl && (qtyEl.value || qtyEl.getAttribute('value')) || '1',10);
+    if(!isFinite(val) || val < 1) val = 1;
+    var step = parseInt(qtyEl && (qtyEl.getAttribute('data-collection-min-qty') || qtyEl.step || '1'),10) || 1;
+    var min = parseInt(qtyEl && (qtyEl.getAttribute('data-collection-min-qty') || qtyEl.min || step || '1'),10) || 1;
+    var max = parseInt(qtyEl && (qtyEl.max || '999999'),10) || 999999;
+    val = clampAndSnap(val, step, min, max, true);
+    return { val: val, baseCard: baseCard, qtyEl: qtyEl };
   }
   function findQtyInput(btn){
     var group = btn.closest('.collection-qty-group');
@@ -257,24 +279,84 @@
     });
   }
 
+  function handleDelegatedAddToCart(e){
+    var btn = e.target.closest('[data-collection-add-to-cart], .collection-add-to-cart, .add-to-cart');
+    if(!btn) return;
+    var card = btn.closest('.sf__pcard');
+    if(!card) return;
+    e.preventDefault();
+    if(addToCartLocks.has(btn) || btn.disabled || btn.getAttribute('aria-busy') === 'true') return;
+    addToCartLocks.add(btn);
+    btn.disabled = true;
+    btn.setAttribute('aria-busy','true');
+    var info = getVisibleQty(card);
+    var form = info.baseCard.querySelector('form.product-card-form, form[action*="/cart/add"]');
+    if(!form){
+      btn.removeAttribute('aria-busy');
+      btn.disabled = false;
+      addToCartLocks.delete(btn);
+      return;
+    }
+    var fd = new FormData(form);
+    fd.set('quantity', String(info.val));
+    fetch('/cart/add.js', {
+      method:'POST',
+      headers:{ 'Accept':'application/json' },
+      body: fd
+    })
+      .then(function(res){
+        if(!res.ok){
+          return res.json().then(function(j){ throw j; });
+        }
+        return res.json();
+      })
+      .then(function(body){
+        window.ConceptSGMEvents?.emit('COLLECTION_ITEM_ADDED', body);
+        window.Shopify?.onItemAdded?.(body);
+        document.dispatchEvent(new CustomEvent('cart:updated', { detail:{ source:'collection-quick-add' } }));
+      })
+      .catch(function(err){
+        console.error('[quick-add] error:', err);
+      })
+      .finally(function(){
+        btn.removeAttribute('aria-busy');
+        btn.disabled = false;
+        addToCartLocks.delete(btn);
+      });
+  }
+
   function handleDoubleQtyClick(e){
     var btn = e.target.closest('.collection-double-qty-btn');
     if(!btn) return;
     e.preventDefault();
-    var input = findQtyInput(btn);
-    if(!input) return;
-    var step = parseInt(input.getAttribute('data-collection-min-qty'),10) || parseInt(input.step,10) || 1;
-    var max = input.max ? parseInt(input.max,10) : Infinity;
-    var current = parseInt(input.value,10);
+    var card = btn.closest('[data-product-id],[data-collection-product-id]');
+    if(card === btn){
+      card = btn.parentElement && btn.parentElement.closest('[data-product-id],[data-collection-product-id]');
+    }
+    var pid = card && (card.getAttribute('data-product-id') || card.getAttribute('data-collection-product-id'));
+    var dup = card && isDuplicateSlide(card);
+    var realCard = dup ? findRealCardByPid(card, pid) : card;
+    var qtyEl = findQtyEl(realCard);
+    if(!qtyEl){
+      qtyEl = findQtyInput(btn);
+      if(!qtyEl) return;
+    }
+    var step = parseInt(qtyEl.getAttribute('data-collection-min-qty'),10) || parseInt(qtyEl.step,10) || 1;
+    var max = qtyEl.max ? parseInt(qtyEl.max,10) : Infinity;
+    var current = parseInt(qtyEl.value,10);
     if(isNaN(current)) current = 0;
     var newVal = current + step;
     if(newVal > max) newVal = max;
-    input.value = newVal;
-    validateAndHighlight(input);
-    updateQtyButtonsState(input);
-    input.dispatchEvent(new Event('input',{bubbles:true}));
-    input.dispatchEvent(new Event('change',{bubbles:true}));
-    updateCollectionDoubleQtyState(input);
+    qtyEl.value = newVal;
+    validateAndHighlight(qtyEl);
+    updateQtyButtonsState(qtyEl);
+    qtyEl.dispatchEvent(new Event('input',{bubbles:true}));
+    qtyEl.dispatchEvent(new Event('change',{bubbles:true}));
+    updateCollectionDoubleQtyState(qtyEl);
+    if(dup){
+      var cloneQty = findQtyEl(card);
+      if(cloneQty && cloneQty !== qtyEl){ cloneQty.value = newVal; }
+    }
     clearTextSelection();
     btn.blur();
   }
@@ -315,6 +397,7 @@
   document.addEventListener('change', handleQtyInputEvent, true);
   document.addEventListener('blur', handleQtyInputEvent, true);
   document.addEventListener('keypress', handleQtyKeypress, true);
+  document.addEventListener('click', handleDelegatedAddToCart, true);
   document.addEventListener('click', handleDoubleQtyClick, true);
   document.addEventListener('focus', handleDoubleQtyFocus, true);
   document.addEventListener('blur', handleDoubleQtyBlur, true);

@@ -44,3 +44,8 @@
   }
 }
 
+.qty-error {
+  color: #e3342f !important;
+  border-color: #e3342f !important;
+}
+
