@@ -246,12 +246,7 @@
     var step = parseInt(qtyEl && (qtyEl.getAttribute('data-collection-min-qty') || qtyEl.step || '1'),10) || 1;
     var min = parseInt(qtyEl && (qtyEl.getAttribute('data-collection-min-qty') || qtyEl.min || step || '1'),10) || 1;
     var max = parseInt(qtyEl && (qtyEl.max || '999999'),10) || 999999;
-    val = Math.max(min, Math.min(max, val));
-    if(step > 1){
-      var snapped = Math.round((val - min)/step)*step + min;
-      if(snapped < min) snapped = min;
-      if(isFinite(snapped)) val = snapped;
-    }
+    val = clampAndSnap(val, step, min, max, true);
     return { val: val, baseCard: baseCard, qtyEl: qtyEl };
   }
   function findQtyInput(btn){
