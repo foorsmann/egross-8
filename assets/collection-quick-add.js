@@ -522,7 +522,14 @@ function handleDelegatedAddToCart(e){
             }else{
               window.ConceptSGMEvents?.emit('COLLECTION_ITEM_ADDED', body);
               window.Shopify?.onItemAdded?.(body);
-              if(resetQty && qtyInput){ applyCappedQtyState(qtyInput); }
+              if(resetQty){
+                const pid = this.dataset.collectionProductId;
+                if(typeof window.applyCappedQtyState === 'function'){
+                  window.applyCappedQtyState({ dataset: { productId: pid } });
+                } else if(qtyInput){
+                  applyCappedQtyState(qtyInput);
+                }
+              }
               this.error.hide();
             }
           })
