@@ -95,9 +95,11 @@
       input.classList.add('text-red-600');
       input.style.color = '#e3342f';
       updateQtyButtonsState(input);
+      updateCollectionDoubleQtyState(input);
       setTimeout(function(){
         input.value = 0;
         updateQtyButtonsState(input);
+        updateCollectionDoubleQtyState(input);
       },0);
       var clearWarning = function(){
         input.classList.remove('text-red-600');
@@ -113,6 +115,7 @@
         input.removeEventListener('input', clearWarning);
         input.removeEventListener('change', clearWarning);
         syncOtherQtyInputs(input);
+        updateCollectionDoubleQtyState(input);
       };
       input.addEventListener('input', clearWarning, {once:true});
       input.addEventListener('change', clearWarning, {once:true});
@@ -286,7 +289,7 @@
     });
   }
 
-function handleDelegatedAddToCart(e){
+async function handleDelegatedAddToCart(e){
   var btn = e.target.closest('[data-collection-add-to-cart], .collection-add-to-cart, .add-to-cart');
   if(!btn) return;
   if(!btn.closest('.sf__pcard')) return;              // rulează doar în cadrul cardurilor de produs
@@ -306,42 +309,104 @@ function handleDelegatedAddToCart(e){
     return;
   }
 
-  var info = getVisibleQty(card);
-  var form = info.baseCard.querySelector('form.product-card-form, form[action*="/cart/add"]');
-  if(!form){
+  var error = new CollectionPCardError(card.querySelector('.collection-pcard-error'));
+
+  try{
+    var info = getVisibleQty(card);
+    var form = info.baseCard.querySelector('form.product-card-form, form[action*="/cart/add"]');
+    if(!form) return;
+    var idInput = form.querySelector('[name="id"]');
+    var variantId = parseInt(idInput && idInput.value,10);
+    if(!variantId) return;
+    var qtyEl = info.qtyEl || form.querySelector('input[name="quantity"]');
+    var requestedQty = info.val;
+    var maxQty = qtyEl && qtyEl.max ? parseInt(qtyEl.max,10) : Infinity;
+
+    var cartQty = 0;
+    try{
+      var cart = await fetch('/cart.js').then(function(r){ return r.json(); });
+      cartQty = cart.items?.find(function(it){ return it.variant_id === variantId; })?.quantity || 0;
+    }catch(err){ cartQty = 0; }
+
+    var available = Math.max(maxQty - cartQty, 0);
+    var pid = (qtyEl && qtyEl.dataset.collectionProductId) || card.getAttribute('data-collection-product-id') || card.getAttribute('data-product-id');
+
+    if(available <= 0){
+      error.show(window.ConceptSGMStrings?.cartLimit || 'Cantitatea maxima pentru acest produs este deja in cos.');
+      if(typeof window.applyCappedQtyState === 'function'){
+        window.applyCappedQtyState({ dataset: { productId: pid } });
+      }else if(qtyEl){
+        applyCappedQtyState(qtyEl);
+      }
+      return;
+    }
+
+    var resetQty = false;
+    var sendQty = requestedQty;
+    if(requestedQty > available){
+      sendQty = available;
+      resetQty = true;
+    }
+
+    var fd = new FormData(form);
+    fd.set('quantity', String(sendQty));
+
+    var res = await fetch('/cart/add.js', {
+      method:'POST',
+      headers:{ 'Accept':'application/json' },
+      body: fd
+    });
+    var body;
+    try{ body = await res.json(); }catch(parseErr){ body = {}; }
+    if(!res.ok || body.status){
+      var msg = body.description || body.message || body.errors || window.ConceptSGMStrings?.cartError || 'Error';
+      if(typeof msg === 'object'){
+        if(Array.isArray(msg)) msg = msg[0];
+        else{
+          var key = Object.keys(msg)[0];
+          msg = Array.isArray(msg[key]) ? msg[key][0] : msg[key];
+        }
+      }
+      if(!msg || typeof msg !== 'string' || /<\/?html/i.test(msg)){
+        msg = window.ConceptSGMStrings?.cartError || 'Error';
+      }
+      error.show(msg);
+      return;
+    }
+
+    window.ConceptSGMEvents?.emit('COLLECTION_ITEM_ADDED', body);
+    window.Shopify?.onItemAdded?.(body);
+    document.dispatchEvent(new CustomEvent('cart:updated', { detail:{ source:'collection-quick-add' } }));
+
+    if(resetQty){
+      if(typeof window.applyCappedQtyState === 'function'){
+        window.applyCappedQtyState({ dataset: { productId: pid } });
+      }else if(qtyEl){
+        applyCappedQtyState(qtyEl);
+      }
+      error.show(window.ConceptSGMStrings?.cartLimit || 'Cantitatea maxima pentru acest produs este deja in cos.');
+    }else{
+      error.hide();
+    }
+  }catch(err){
+    console.error('[quick-add] error:', err);
+    var msg = err && (err.message || err.description || err.errors);
+    if(typeof msg === 'object'){
+      if(Array.isArray(msg)) msg = msg[0];
+      else{
+        var key = Object.keys(msg)[0];
+        msg = Array.isArray(msg[key]) ? msg[key][0] : msg[key];
+      }
+    }
+    if(!msg || typeof msg !== 'string' || /<\/?html/i.test(msg)){
+      msg = window.ConceptSGMStrings?.cartError || 'Error';
+    }
+    error.show(msg);
+  }finally{
     btn.removeAttribute('aria-busy');
     btn.disabled = false;
     addToCartLocks.delete(btn);
-    return;
   }
-
-  var fd = new FormData(form);
-  fd.set('quantity', String(info.val));
-
-  fetch('/cart/add.js', {
-    method:'POST',
-    headers:{ 'Accept':'application/json' },
-    body: fd
-  })
-    .then(function(res){
-      if(!res.ok){
-        return res.json().then(function(j){ throw j; });
-      }
-      return res.json();
-    })
-    .then(function(body){
-      window.ConceptSGMEvents?.emit('COLLECTION_ITEM_ADDED', body);
-      window.Shopify?.onItemAdded?.(body);
-      document.dispatchEvent(new CustomEvent('cart:updated', { detail:{ source:'collection-quick-add' } }));
-    })
-    .catch(function(err){
-      console.error('[quick-add] error:', err);
-    })
-    .finally(function(){
-      btn.removeAttribute('aria-busy');
-      btn.disabled = false;
-      addToCartLocks.delete(btn);
-    });
 }
 
   function handleDoubleQtyClick(e){
