@@ -471,10 +471,12 @@ function handleDelegatedAddToCart(e){
           this.toggleSpinner(false);
           return;
         }
-        if(requestedQty > available){
-          formData.set('quantity', available);
+        if(requestedQty >= available){
+          if(requestedQty > available){
+            formData.set('quantity', available);
+            this.error.show(window.ConceptSGMStrings?.cartLimit || 'Cantitatea maxima pentru acest produs este deja in cos.');
+          }
           resetQty = true;
-          this.error.show(window.ConceptSGMStrings?.cartLimit || 'Cantitatea maxima pentru acest produs este deja in cos.');
         }
       const config = {
         method:'POST',

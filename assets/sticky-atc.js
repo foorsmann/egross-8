@@ -1357,8 +1357,10 @@ if (!customElements.get('sticky-atc')) {
         this.stickyError?.show(window.ConceptSGMStrings.cartLimit || 'Cantitatea maxima pentru acest produs este deja in cos.');
         return;
       }
-      if (requestedQty > availableToAdd) {
-        formData.set('quantity', availableToAdd);
+      if (requestedQty >= availableToAdd) {
+        if (requestedQty > availableToAdd) {
+          formData.set('quantity', availableToAdd);
+        }
         if (qtyInput) {
           resetQty = true;
         }
