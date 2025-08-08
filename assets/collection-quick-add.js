@@ -333,7 +333,9 @@
         }
         return res.json();
       })
-      .then(function(){
+      .then(function(body){
+        window.ConceptSGMEvents?.emit('COLLECTION_ITEM_ADDED', body);
+        window.Shopify?.onItemAdded?.(body);
         document.dispatchEvent(new CustomEvent('cart:updated', { detail:{ source:'collection-quick-add' } }));
       })
       .catch(function(err){
