@@ -3,11 +3,6 @@
  * Mirrors product-page quantity logic with collection-specific hooks.
  */
 (function(){
-  var DELEGATED_SECTIONS = [
-    '#shopify-section-template--25993114681683__product-recommendations',
-    '#shopify-section-template--25993114681683__recent-viewed-products'
-  ];
-  var DELEGATED_SECTION_SELECTOR = DELEGATED_SECTIONS.join(', ');
   var addToCartLocks = new WeakSet();
   function snapDown(val, step, min){
     if(!isFinite(val)) return min;
@@ -292,8 +287,6 @@
   }
 
   function handleDelegatedAddToCart(e){
-    var section = e.target.closest(DELEGATED_SECTION_SELECTOR);
-    if(!section) return;
     var btn = e.target.closest('[data-collection-add-to-cart], .collection-add-to-cart, .add-to-cart');
     if(!btn) return;
     e.preventDefault();
@@ -347,54 +340,35 @@
   function handleDoubleQtyClick(e){
     var btn = e.target.closest('.collection-double-qty-btn');
     if(!btn) return;
-    var inSection = btn.closest(DELEGATED_SECTION_SELECTOR);
-    if(inSection){
-      e.preventDefault();
-      var card = btn.closest('[data-product-id],[data-collection-product-id]');
-      if(card === btn) {
-        card = btn.parentElement && btn.parentElement.closest('[data-product-id],[data-collection-product-id]');
-      }
-      if(!card) return;
-      var pid = card.getAttribute('data-product-id') || card.getAttribute('data-collection-product-id');
-      var dup = isDuplicateSlide(card);
-      var realCard = dup ? findRealCardByPid(card, pid) : card;
-      var qtyEl = findQtyEl(realCard);
-      if(!qtyEl) return;
-      var step = parseInt(qtyEl.getAttribute('data-collection-min-qty'),10) || parseInt(qtyEl.step,10) || 1;
-      var max = qtyEl.max ? parseInt(qtyEl.max,10) : Infinity;
-      var current = parseInt(qtyEl.value,10);
-      if(isNaN(current)) current = 0;
-      var newVal = current + step;
-      if(newVal > max) newVal = max;
-      qtyEl.value = newVal;
-      validateAndHighlight(qtyEl);
-      updateQtyButtonsState(qtyEl);
-      qtyEl.dispatchEvent(new Event('input',{bubbles:true}));
-      qtyEl.dispatchEvent(new Event('change',{bubbles:true}));
-      updateCollectionDoubleQtyState(qtyEl);
-      if(dup){
-        var cloneQty = findQtyEl(card);
-        if(cloneQty && cloneQty !== qtyEl){ cloneQty.value = newVal; }
-      }
-      clearTextSelection();
-      btn.blur();
-      return;
-    }
     e.preventDefault();
-    var input = findQtyInput(btn);
-    if(!input) return;
-    var step = parseInt(input.getAttribute('data-collection-min-qty'),10) || parseInt(input.step,10) || 1;
-    var max = input.max ? parseInt(input.max,10) : Infinity;
-    var current = parseInt(input.value,10);
+    var card = btn.closest('[data-product-id],[data-collection-product-id]');
+    if(card === btn){
+      card = btn.parentElement && btn.parentElement.closest('[data-product-id],[data-collection-product-id]');
+    }
+    var pid = card && (card.getAttribute('data-product-id') || card.getAttribute('data-collection-product-id'));
+    var dup = card && isDuplicateSlide(card);
+    var realCard = dup ? findRealCardByPid(card, pid) : card;
+    var qtyEl = findQtyEl(realCard);
+    if(!qtyEl){
+      qtyEl = findQtyInput(btn);
+      if(!qtyEl) return;
+    }
+    var step = parseInt(qtyEl.getAttribute('data-collection-min-qty'),10) || parseInt(qtyEl.step,10) || 1;
+    var max = qtyEl.max ? parseInt(qtyEl.max,10) : Infinity;
+    var current = parseInt(qtyEl.value,10);
     if(isNaN(current)) current = 0;
     var newVal = current + step;
     if(newVal > max) newVal = max;
-    input.value = newVal;
-    validateAndHighlight(input);
-    updateQtyButtonsState(input);
-    input.dispatchEvent(new Event('input',{bubbles:true}));
-    input.dispatchEvent(new Event('change',{bubbles:true}));
-    updateCollectionDoubleQtyState(input);
+    qtyEl.value = newVal;
+    validateAndHighlight(qtyEl);
+    updateQtyButtonsState(qtyEl);
+    qtyEl.dispatchEvent(new Event('input',{bubbles:true}));
+    qtyEl.dispatchEvent(new Event('change',{bubbles:true}));
+    updateCollectionDoubleQtyState(qtyEl);
+    if(dup){
+      var cloneQty = findQtyEl(card);
+      if(cloneQty && cloneQty !== qtyEl){ cloneQty.value = newVal; }
+    }
     clearTextSelection();
     btn.blur();
   }
