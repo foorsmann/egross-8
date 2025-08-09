@@ -301,7 +301,7 @@ async function handleDelegatedAddToCart(e){
   btn.disabled = true;
   btn.setAttribute('aria-busy','true');
 
-  var card = btn.closest('[data-product-id],[data-collection-product-id]');
+  var card = btn.closest('.sf__pcard') || btn.closest('[data-product-id],[data-collection-product-id]');
   if(!card){
     btn.removeAttribute('aria-busy');
     btn.disabled = false;
@@ -311,19 +311,18 @@ async function handleDelegatedAddToCart(e){
 
   // găsește sau creează containerul .collection-pcard-error pentru acest card
   let errorEl = card.querySelector('.collection-pcard-error');
+  const imageWrapper = card.querySelector('.sf__pcard-image') || card;
   if(!errorEl){
     errorEl = document.createElement('div');
     errorEl.className = 'collection-pcard-error';
     const span = document.createElement('span');
     span.className = 'collection-pcard-error__msg';
     errorEl.append(span);
-    // inserează containerul în wrapperul de imagine
-    const imageWrapper = card.querySelector('.sf__pcard-image');
-    if(imageWrapper){
-      imageWrapper.prepend(errorEl);
-    }
   }
-  // folosește noul nod când creezi obiectul de eroare
+  if(errorEl.parentElement !== imageWrapper){
+    imageWrapper.prepend(errorEl);
+  }
+  // folosește nodul găsit sau creat când creezi obiectul de eroare
   const error = new CollectionPCardError(errorEl);
 
   try{
@@ -519,25 +518,24 @@ async function handleDelegatedAddToCart(e){
       this.submitButton = this.querySelector('.collection-add-to-cart');
       this.idInput = this.form ? this.form.querySelector('[name="id"]') : null;
       if(this.idInput){ this.idInput.disabled = false; }
-      // determină cardul de produs asociat (același cod ca înainte)
+      // determină cardul de produs asociat
       const card = this.closest('.sf__pcard');
 
       // caută containerul de eroare
       let errorEl = card ? card.querySelector('.collection-pcard-error') : null;
+      const imageWrapper = card && (card.querySelector('.sf__pcard-image') || card);
 
-      // dacă nu există containerul de eroare în card, creează-l și îl inserează
+      // dacă nu există containerul de eroare, creează-l
       if(!errorEl && card){
-        // creăm elementul cu clasele corecte
         errorEl = document.createElement('div');
         errorEl.className = 'collection-pcard-error';
         const span = document.createElement('span');
         span.className = 'collection-pcard-error__msg';
         errorEl.append(span);
-        // atașăm containerul la secțiunea de imagine a cardului
-        const imageWrapper = card.querySelector('.sf__pcard-image');
-        if(imageWrapper){
-          imageWrapper.prepend(errorEl);
-        }
+      }
+      // atașează containerul la wrapperul de imagine (sau card) dacă este nevoie
+      if(card && errorEl && imageWrapper && errorEl.parentElement !== imageWrapper){
+        imageWrapper.prepend(errorEl);
       }
 
       // folosește elementul găsit sau creat când instanțiezi CollectionPCardError
