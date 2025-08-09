@@ -355,11 +355,12 @@ async function handleDelegatedAddToCart(e){
       return;
     }
 
-    var resetQty = false;
-    var sendQty = requestedQty;
-    if(requestedQty > available){
-      sendQty = available;
-      resetQty = true;
+    const exceed = requestedQty > available;      // cerere > disponibil
+    const resetQty = requestedQty >= available;   // cerere >= disponibil → vrem reset ca pe product page
+
+    let sendQty = requestedQty;
+    if (exceed) {
+      sendQty = available; // plafonăm doar când depășește
     }
 
     var fd = new FormData(form);
@@ -392,14 +393,27 @@ async function handleDelegatedAddToCart(e){
     window.Shopify?.onItemAdded?.(body);
     document.dispatchEvent(new CustomEvent('cart:updated', { detail:{ source:'collection-quick-add' } }));
 
-    if(resetQty){
-      if(typeof window.applyCappedQtyState === 'function'){
-        window.applyCappedQtyState({ dataset: { productId: pid } });
-      }else if(qtyEl){
-        applyCappedQtyState(qtyEl);
+    if (resetQty) {
+      // încearcă să obții inputul vizibil din cardul curent
+      const targetInput =
+        (info && info.qtyEl) ||
+        qtyEl ||
+        form.querySelector('input[data-collection-quantity-input]');
+
+      // reset la 0 + highlight roșu, ca pe pagina de produs, dar pentru colecții
+      if (targetInput && typeof window.collectionApplyCappedQtyState === 'function') {
+        window.collectionApplyCappedQtyState(targetInput);
+      } else if (targetInput && typeof window.applyCappedQtyState === 'function') {
+        window.applyCappedQtyState(targetInput);
       }
-      error.show(window.ConceptSGMStrings?.cartLimit || 'Cantitatea maxima pentru acest produs este deja in cos.');
-    }else{
+
+      // mesajul de limită doar dacă s-a depășit (nu și la egal cu disponibilul)
+      if (exceed) {
+        error.show(window.ConceptSGMStrings?.cartLimit || 'Cantitatea maxima pentru acest produs este deja in cos.');
+      } else {
+        error.hide();
+      }
+    } else {
       error.hide();
     }
   }catch(err){
