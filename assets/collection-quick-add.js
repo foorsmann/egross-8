@@ -301,7 +301,7 @@ async function handleDelegatedAddToCart(e){
   btn.disabled = true;
   btn.setAttribute('aria-busy','true');
 
-  var card = btn.closest('[data-product-id],[data-collection-product-id]');
+  var card = btn.closest('.sf__pcard') || btn.closest('[data-product-id],[data-collection-product-id]');
   if(!card){
     btn.removeAttribute('aria-busy');
     btn.disabled = false;
@@ -309,7 +309,21 @@ async function handleDelegatedAddToCart(e){
     return;
   }
 
-  var error = new CollectionPCardError(card.querySelector('.collection-pcard-error'));
+  // găsește sau creează containerul .collection-pcard-error pentru acest card
+  let errorEl = card.querySelector('.collection-pcard-error');
+  const imageWrapper = card.querySelector('.sf__pcard-image') || card;
+  if(!errorEl){
+    errorEl = document.createElement('div');
+    errorEl.className = 'collection-pcard-error';
+    const span = document.createElement('span');
+    span.className = 'collection-pcard-error__msg';
+    errorEl.append(span);
+  }
+  if(errorEl.parentElement !== imageWrapper){
+    imageWrapper.prepend(errorEl);
+  }
+  // reutilizează instanța CollectionPCardError dacă există pentru a evita timerele paralele
+  const error = errorEl.__errorInstance || (errorEl.__errorInstance = new CollectionPCardError(errorEl));
 
   try{
     var info = getVisibleQty(card);
@@ -504,8 +518,28 @@ async function handleDelegatedAddToCart(e){
       this.submitButton = this.querySelector('.collection-add-to-cart');
       this.idInput = this.form ? this.form.querySelector('[name="id"]') : null;
       if(this.idInput){ this.idInput.disabled = false; }
+      // determină cardul de produs asociat
       const card = this.closest('.sf__pcard');
-      this.error = new CollectionPCardError(card ? card.querySelector('.collection-pcard-error') : null);
+
+      // caută containerul de eroare
+      let errorEl = card ? card.querySelector('.collection-pcard-error') : null;
+      const imageWrapper = card && (card.querySelector('.sf__pcard-image') || card);
+
+      // dacă nu există containerul de eroare, creează-l
+      if(!errorEl && card){
+        errorEl = document.createElement('div');
+        errorEl.className = 'collection-pcard-error';
+        const span = document.createElement('span');
+        span.className = 'collection-pcard-error__msg';
+        errorEl.append(span);
+      }
+      // atașează containerul la wrapperul de imagine (sau card) dacă este nevoie
+      if(card && errorEl && imageWrapper && errorEl.parentElement !== imageWrapper){
+        imageWrapper.prepend(errorEl);
+      }
+
+      // folosește elementul găsit sau creat când instanțiezi CollectionPCardError
+      this.error = errorEl ? (errorEl.__errorInstance || (errorEl.__errorInstance = new CollectionPCardError(errorEl))) : new CollectionPCardError(null);
       this.addEventListener('submit', this.onSubmit.bind(this));
     }
     toggleSpinner(show){
