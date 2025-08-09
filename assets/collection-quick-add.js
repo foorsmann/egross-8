@@ -322,8 +322,8 @@ async function handleDelegatedAddToCart(e){
   if(errorEl.parentElement !== imageWrapper){
     imageWrapper.prepend(errorEl);
   }
-  // folosește nodul găsit sau creat când creezi obiectul de eroare
-  const error = new CollectionPCardError(errorEl);
+  // reutilizează instanța CollectionPCardError dacă există pentru a evita timerele paralele
+  const error = errorEl.__errorInstance || (errorEl.__errorInstance = new CollectionPCardError(errorEl));
 
   try{
     var info = getVisibleQty(card);
@@ -539,7 +539,7 @@ async function handleDelegatedAddToCart(e){
       }
 
       // folosește elementul găsit sau creat când instanțiezi CollectionPCardError
-      this.error = new CollectionPCardError(errorEl);
+      this.error = errorEl ? (errorEl.__errorInstance || (errorEl.__errorInstance = new CollectionPCardError(errorEl))) : new CollectionPCardError(null);
       this.addEventListener('submit', this.onSubmit.bind(this));
     }
     toggleSpinner(show){
