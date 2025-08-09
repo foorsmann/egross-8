@@ -317,9 +317,11 @@ async function handleDelegatedAddToCart(e){
     const span = document.createElement('span');
     span.className = 'collection-pcard-error__msg';
     errorEl.append(span);
-    // inserează containerul în wrapperul de imagine sau direct în card
-    const imageWrapper = card.querySelector('.sf__pcard-image') || card;
-    imageWrapper.prepend(errorEl);
+    // inserează containerul în wrapperul de imagine
+    const imageWrapper = card.querySelector('.sf__pcard-image');
+    if(imageWrapper){
+      imageWrapper.prepend(errorEl);
+    }
   }
   // folosește noul nod când creezi obiectul de eroare
   const error = new CollectionPCardError(errorEl);
@@ -531,10 +533,11 @@ async function handleDelegatedAddToCart(e){
         const span = document.createElement('span');
         span.className = 'collection-pcard-error__msg';
         errorEl.append(span);
-        // atașăm containerul la secțiunea de imagine a cardului (sau la card)
-        const imageWrapper =
-          card.querySelector('.sf__pcard-image') || card;
-        imageWrapper.prepend(errorEl);
+        // atașăm containerul la secțiunea de imagine a cardului
+        const imageWrapper = card.querySelector('.sf__pcard-image');
+        if(imageWrapper){
+          imageWrapper.prepend(errorEl);
+        }
       }
 
       // folosește elementul găsit sau creat când instanțiezi CollectionPCardError
