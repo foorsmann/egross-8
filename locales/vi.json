@@ -25,7 +25,7 @@
       "mins": "Phút",
       "minutes": "biên bản",
       "secs": "Khô",
-      "seconds": "Giây"
+      "seconds": "Giay"
     },
     "breadcrumbs": {
       "home": "Nhà",
@@ -54,7 +54,7 @@
       "no_results_html": "Vui lòng thử một cụm từ tìm kiếm khác hoặc quay lại <a href=\"/\">trang chủ</a>."
     },
     "newsletter_form": {
-      "confirmation": "Cảm ơn bạn đã đăng ký"
+      "confirmation": "Cảm ơn bạn đã đang ký"
     },
     "payment": {
       "options": "Tùy chọn thanh toán"
@@ -107,8 +107,8 @@
       "post": "Gửi ngay",
       "reply": "Trả lời",
       "at_time": "tại",
-      "success_moderated": "Bình luận của bạn đã được đăng thành công. Chúng tôi sẽ xuất bản nó trong một thời gian ngắn, vì blog của chúng tôi được kiểm duyệt.",
-      "success": "Bình luận của bạn đã được đăng thành công! Cảm ơn bạn!",
+      "success_moderated": "Bình luận của bạn đã được đang thành công. Chúng tôi sẽ xuất bản nó trong một thời gian ngắn, vì blog của chúng tôi được kiểm duyệt.",
+      "success": "Bình luận của bạn đã được đang thành công! Cảm ơn bạn!",
       "comments_with_count": {
         "one": "{{ đếm }} chú thích",
         "other": "{{ đếm }} ý kiến"
@@ -131,7 +131,7 @@
       "taxes_and_shipping_policy_at_checkout_html": "Thuế và <a href=\"{{ link }}\">vận chuyển</a> tính khi thanh toán",
       "taxes_included_but_shipping_at_checkout": "Đã bao gồm thuế và phí vận chuyển được tính khi thanh toán",
       "taxes_included_and_shipping_policy_html": "Đã bao gồm thuế. <a href=\"{{ link }}\">Vận chuyển</a> được tính khi thanh toán.",
-      "enter_discount_code": "Nhập mã giảm giá tại đây",
+      "enter_discount_code": "Nhập mã giảm giá tại đay",
       "checkout": "Kiểm tra lại",
       "viewcart": "Xem giỏ hàng",
       "empty": "Giỏ hàng của bạn hiện đang trống.",
@@ -192,7 +192,7 @@
       "save_infor_message": "Lưu tên, email và trang web của tôi trong trình duyệt này cho lần nhận xét tiếp theo."
     },
     "ask-form": {
-      "heading": "Đặt một câu hỏi",
+      "heading": "Đặt một cau hỏi",
       "name": "Tên bạn",
       "email": "Email của bạn",
       "phone": "Số điện thoại của bạn",
@@ -209,7 +209,7 @@
       "dashboard": "Bảng Điều Khiển (Dashboard",
       "addresses": "Địa chỉ",
       "wishlist": "Danh sách yêu thích",
-      "log_out": "Đăng xuất",
+      "log_out": "Đang xuất",
       "details": "Chi tiết tài khoản",
       "name": "Tên",
       "email": "Email",
@@ -236,7 +236,7 @@
       "last_name": "Họ",
       "company": "Công ty",
       "address1": "Địa chỉ",
-      "address2": "Căn hộ, phòng suite, v.v.",
+      "address2": "Can hộ, phòng suite, v.v.",
       "city": "Thành phố",
       "country": "Quốc gia",
       "province": "Tỉnh",
@@ -250,11 +250,11 @@
       "delete_confirm": "Bạn có chắc chắn muốn xóa địa chỉ này không?"
     },
     "login": {
-      "title": "Đăng nhập",
+      "title": "Đang nhập",
       "email": "Email",
       "password": "Mật khẩu",
       "forgot_password": "Quên Mật khẩu?",
-      "sign_in": "Đăng nhập",
+      "sign_in": "Đang nhập",
       "new_customer": "Khách hàng mới"
     },
     "orders": {
@@ -305,8 +305,8 @@
       "submit": "Đặt lại mật khẩu"
     },
     "register": {
-      "title": "Đăng ký",
-      "description": "Đăng ký quyền truy cập Giảm giá sớm cộng với hàng mới, xu hướng và chương trình khuyến mãi mới được thiết kế riêng. Để chọn không tham gia, hãy nhấp vào hủy đăng ký trong email của chúng tôi.",
+      "title": "Đang ký",
+      "description": "Đang ký quyền truy cập Giảm giá sớm cộng với hàng mới, xu hướng và chương trình khuyến mãi mới được thiết kế riêng. Để chọn không tham gia, hãy nhấp vào hủy đang ký trong email của chúng tôi.",
       "first_name": "Tên thánh",
       "last_name": "Họ"
     }
@@ -314,7 +314,7 @@
   "homepage": {
     "onboarding": {
       "blog_title": "Tiêu đề bài viết của bạn",
-      "blog_excerpt": "Cửa hàng của bạn chưa đăng bất kỳ bài đăng nào trên blog. Blog có thể được sử dụng để nói về việc ra mắt sản phẩm mới, mẹo hoặc tin tức khác mà bạn muốn chia sẻ với khách hàng của mình.",
+      "blog_excerpt": "Cửa hàng của bạn chưa đang bất kỳ bài đang nào trên blog. Blog có thể được sử dụng để nói về việc ra mắt sản phẩm mới, mẹo hoặc tin tức khác mà bạn muốn chia sẻ với khách hàng của mình.",
       "product_title": "Tiêu đề sản phẩm mẫu",
       "product_description": "Khu vực này được sử dụng để mô tả chi tiết sản phẩm của bạn. Cho khách hàng biết về giao diện và kiểu dáng sản phẩm của bạn. Thêm chi tiết về màu sắc, vật liệu được sử dụng, kích thước và nơi sản xuất.",
       "collection_title": "Tiêu đề bộ sưu tập mẫu",
@@ -339,7 +339,7 @@
     },
     "customer": {
       "account": "Tài khoản",
-      "log_in": "Đăng nhập"
+      "log_in": "Đang nhập"
     }
   },
   "pages": {
@@ -362,14 +362,14 @@
       "add_to_wishlist": "Thêm vào danh sách yêu thích",
       "remove_from_wishlist": "Xóa khỏi danh sách yêu thích",
       "add_to_compare": "So sánh",
-      "add_a_question": "Đặt câu hỏi",
+      "add_a_question": "Đặt cau hỏi",
       "remove_from_compare": "Xóa khỏi so sánh",
       "quick_add": "Thêm nhanh",
       "zoom_in": "Phóng to",
       "quick_view": "Xem nhanh",
       "collection": "Bộ sưu tập",
       "decrease_quantity": "Giảm số lượng {{ title }} xuống một",
-      "increase_quantity": "Tăng số lượng {{ title }} lên một",
+      "increase_quantity": "Tang số lượng {{ title }} lên một",
       "include_taxes": "Đã bao gồm thuế.",
       "price": {
         "from_price_html": "Từ {{ price }}",
@@ -397,12 +397,12 @@
       "unit_price_label": "Đơn giá",
       "size_guide": "Hướng dẫn kích thước",
       "save_html": "Tiết kiệm <span class=\"sf-currency sf-currency--saved font-medium\" data-saved-price>{{ amount }}</span>",
-      "recently_viewed_products": "Sản phẩm được xem gần đây",
+      "recently_viewed_products": "Sản phẩm được xem gần đay",
       "select_options": "Chọn các tùy chọn",
       "sold": "Bán",
       "available": "Có sẵn",
       "xr_button": "Xem trong không gian của bạn",
-      "xr_button_label": "Xem trong không gian của bạn, tải mục trong cửa sổ thực tế tăng cường",
+      "xr_button_label": "Xem trong không gian của bạn, tải mục trong cửa sổ thực tế tang cường",
       "pickup_availability": {
         "view_store_info": "Xem thông tin cửa hàng",
         "check_other_stores": "Kiểm tra tình trạng còn hàng tại các cửa hàng khác",
@@ -416,7 +416,7 @@
   },
   "gift_cards": {
     "issued": {
-      "title": "Đây là thẻ quà tặng {{ value }} của bạn cho {{ shop }}!",
+      "title": "Đay là thẻ quà tặng {{ value }} của bạn cho {{ shop }}!",
       "subtext": "Thẻ quà tặng của bạn",
       "gift_card_code": "Mã thẻ quà tặng",
       "shop_link": "Tiếp tục mua sắm",
