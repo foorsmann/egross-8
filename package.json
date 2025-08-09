@@ -1,0 +1,8 @@
+{
+  "name": "shopify-theme",
+  "private": true,
+  "scripts": {
+    "strip:ro": "node scripts/strip-ro-diacritics.js",
+    "test": "echo \"No tests\""
+  }
+}

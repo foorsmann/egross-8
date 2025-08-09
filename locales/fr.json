@@ -410,7 +410,7 @@
         "pick_up_available_at_html": "Ramassage disponible à l’adresse <span class=\"color-foreground\">{{ location_name }}</span>",
         "pick_up_unavailable_at_html": "Ramassage actuellement indisponible à <span class=\"color-foreground\">{{ location_name }}</span>",
         "unavailable": "Impossible de charger la disponibilité du ramassage",
-        "refresh": "Rafraîchir"
+        "refresh": "Rafraichir"
       }
     }
   },
