@@ -557,6 +557,10 @@ async function handleDelegatedAddToCart(e){
       this.addEventListener('submit', this.onSubmit.bind(this));
     }
     toggleSpinner(show){
+      if(this.submitButton){
+        this.submitButton.toggleAttribute('aria-busy', show);
+        this.submitButton.disabled = show;
+      }
       this.classList[show ? 'add' : 'remove']('adding');
     }
     async onSubmit(e){

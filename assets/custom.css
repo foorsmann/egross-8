@@ -91,3 +91,29 @@
 .collection-pcard-error__msg {
   display: block;
 }
+
+/* Search form custom styling */
+.sf-search-form {
+  height: 46px;
+}
+
+/* limit border styling to the search form */
+.sf-search-form.border {
+  border-width: 2px;
+}
+
+.sf-search-form.border-color-border {
+  border-color: #000000;
+}
+
+/* search popup form */
+[data-search-popup] form {
+  height: 50px;
+  border-width: 2px;
+}
+
+/* Global add-to-cart spinner state */
+.add-to-cart .atc-spinner { display: none; }
+.add-to-cart[aria-busy="true"] .atc-spinner { display: flex; }
+.add-to-cart[aria-busy="true"] .atc-text { visibility: hidden; }
+.add-to-cart[aria-busy="true"] { pointer-events: none; }
