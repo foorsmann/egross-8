@@ -49,6 +49,10 @@ input.collection-qty-element:focus {
 .collection-product-form.adding .atc-text { visibility: hidden; }
 .collection-product-form.adding .add-to-cart { pointer-events: none; }
 
+.add-to-cart[aria-busy="true"] .atc-spinner { display: flex; }
+.add-to-cart[aria-busy="true"] .atc-text { visibility: hidden; }
+.add-to-cart[aria-busy="true"] { pointer-events: none; }
+
 /* layout tweaks for quantity controls inside quick-add cards */
 .collection-qty-group {
   flex-wrap: wrap;
