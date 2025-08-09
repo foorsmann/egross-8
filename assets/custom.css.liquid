@@ -100,10 +100,17 @@
   height: 46px;
 }
 
-.border-color-border {
+/* limit border styling to the search form */
+.sf-search-form.border {
+  border-width: 2px;
+}
+
+.sf-search-form.border-color-border {
   border-color: #000000;
 }
 
-.border {
+/* search popup form */
+[data-search-popup] form {
+  height: 50px;
   border-width: 2px;
 }
