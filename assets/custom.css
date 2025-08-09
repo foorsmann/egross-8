@@ -111,3 +111,7 @@
   height: 50px;
   border-width: 2px;
 }
+
+.prod__sticky-atc .sf__btn.add-to-cart {
+  min-width: auto; /* or 0 to fully reset */
+}
