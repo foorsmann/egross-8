@@ -91,3 +91,16 @@
 .collection-pcard-error__msg {
   display: block;
 }
+
+/* Search form custom styling */
+.sf-search-form {
+  height: 46px;
+}
+
+.border-color-border {
+  border-color: #000000;
+}
+
+.border {
+  border-width: 2px;
+}
