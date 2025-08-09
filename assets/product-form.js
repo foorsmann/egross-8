@@ -27,6 +27,10 @@ if (!customElements.get("product-form")) {
 
       _defineProperty(this, "toggleSpinner", show => {
         const method = show ? "add" : "remove";
+        if (this.submitButton) {
+          this.submitButton.toggleAttribute("aria-busy", show);
+          this.submitButton.disabled = show;
+        }
         this.form.closest(".product-form").classList[method]("adding");
       });
 
