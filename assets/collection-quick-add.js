@@ -504,8 +504,28 @@ async function handleDelegatedAddToCart(e){
       this.submitButton = this.querySelector('.collection-add-to-cart');
       this.idInput = this.form ? this.form.querySelector('[name="id"]') : null;
       if(this.idInput){ this.idInput.disabled = false; }
+      // determină cardul de produs asociat (același cod ca înainte)
       const card = this.closest('.sf__pcard');
-      this.error = new CollectionPCardError(card ? card.querySelector('.collection-pcard-error') : null);
+
+      // caută containerul de eroare
+      let errorEl = card ? card.querySelector('.collection-pcard-error') : null;
+
+      // dacă nu există containerul de eroare în card, creează-l și îl inserează
+      if(!errorEl && card){
+        // creăm elementul cu clasele corecte
+        errorEl = document.createElement('div');
+        errorEl.className = 'collection-pcard-error';
+        const span = document.createElement('span');
+        span.className = 'collection-pcard-error__msg';
+        errorEl.append(span);
+        // atașăm containerul la secțiunea de imagine a cardului (sau la card)
+        const imageWrapper =
+          card.querySelector('.sf__pcard-image') || card;
+        imageWrapper.prepend(errorEl);
+      }
+
+      // folosește elementul găsit sau creat când instanțiezi CollectionPCardError
+      this.error = new CollectionPCardError(errorEl);
       this.addEventListener('submit', this.onSubmit.bind(this));
     }
     toggleSpinner(show){
