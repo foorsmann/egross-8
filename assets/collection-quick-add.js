@@ -309,7 +309,20 @@ async function handleDelegatedAddToCart(e){
     return;
   }
 
-  var error = new CollectionPCardError(card.querySelector('.collection-pcard-error'));
+  // găsește sau creează containerul .collection-pcard-error pentru acest card
+  let errorEl = card.querySelector('.collection-pcard-error');
+  if(!errorEl){
+    errorEl = document.createElement('div');
+    errorEl.className = 'collection-pcard-error';
+    const span = document.createElement('span');
+    span.className = 'collection-pcard-error__msg';
+    errorEl.append(span);
+    // inserează containerul în wrapperul de imagine sau direct în card
+    const imageWrapper = card.querySelector('.sf__pcard-image') || card;
+    imageWrapper.prepend(errorEl);
+  }
+  // folosește noul nod când creezi obiectul de eroare
+  const error = new CollectionPCardError(errorEl);
 
   try{
     var info = getVisibleQty(card);
